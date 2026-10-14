@@ -1,68 +1,74 @@
 # Trips and Charge History
 
-Bluelink Canada has no trip history and no charge history. Numen records both on the phone.
+Bluelink Canada provides neither trip history nor charge history. Numen records both on the device.
 
-## Recording Trips
+## Trip Recording
 
-Trips are detected from the phone's speed, not from the beacon or the OBD-II adapter. The adapter is optional, and the beacon only says the phone is *near* the car, not that it's moving.
+Trips are detected from the device's speed. The OBD-II adapter is optional, and a proximity beacon indicates only that the device is near the vehicle, not that it is moving.
 
-- Significant-location monitoring runs all the time. It's cheap, and it wakes the app even after it's been closed.
-- A fix at **18 km/h** or more starts a trip. That's faster than running and slower than any road, so walking never starts one.
-- Under **4 km/h** counts as stopped. **3 minutes** stopped ends the trip, long enough to survive a long red light.
-- Trips shorter than **400 m** or **90 seconds** are thrown away.
-- Points are saved at most every 10 seconds. Long trips are thinned so the file stays small.
+| Rule | Value |
+|---|---|
+| Monitoring | Significant-location monitoring runs continuously and relaunches the app after termination |
+| Trip start | A location fix at 18 km/h or faster |
+| Stopped | Below 4 km/h |
+| Trip end | 3 minutes stopped |
+| Minimum trip | 400 m and 90 seconds |
+| Route sampling | At most one point every 10 seconds; long trips are thinned |
 
-Anything that needs the network (street names for the start and end, the temperature from WeatherKit) happens after the trip is saved, and updates it in place. A trip is never lost because a lookup failed.
+Network-dependent details (start and end addresses, and outside temperature from WeatherKit) are added after the trip is saved, so a failed lookup never loses a trip.
 
-### Energy and Regen
+### Trip Energy
 
-- With the OBD-II adapter connected, energy used is the change in the BMS's remaining energy. It's exact.
-- Without it, energy comes from the change in Bluelink's SOC, which is rough. The trip says which one it used.
-- Regen comes from the BMS's lifetime counters. See [OBD-II Adapter](obd-adapter.md#regen-per-trip).
+| Source | Method | Precision |
+|---|---|---|
+| OBD-II adapter | Change in the BMS's remaining energy | Measured |
+| Bluelink | Change in reported SOC | Approximate |
+
+Each trip records its source. Regenerative braking is derived from the BMS lifetime counters; see [OBD-II Adapter](obd-adapter.md#regenerative-braking-per-trip).
 
 ## Charge History
 
 <p align="center">
-  <img src="../images/charge-session.png" width="240" alt="A recorded DC fast charge">
+  <img src="../images/charge-session.png" width="240" alt="A recorded DC fast charging session">
 </p>
 
-Readings come from two places and are stitched into sessions:
+Readings from two sources are combined into sessions:
 
-- The **OBD-II adapter** every 60 seconds while connected, and straight away when a charge starts or stops.
-- **Bluelink** on each status refresh, but only while the adapter isn't connected. A cached "not charging" from Bluelink would otherwise end a session that's still running.
+- **OBD-II adapter:** every 60 seconds while connected, and immediately when charging starts or stops.
+- **Bluelink:** on each status refresh, only while the adapter is not connected, so that a cached "not charging" status cannot end an active session.
 
-Rules for stitching:
+| Rule | Value |
+|---|---|
+| Session continuity | An active session may go up to 24 hours between readings, provided SOC has not decreased |
+| Unobserved charges | An SOC increase of 5% or more between two idle readings within 18 hours is recorded as an estimated session, with an estimated duration and a minimum power |
 
-- A session already under way can go up to **24 hours** between readings and still be the same charge, as long as SOC hasn't dropped. The adapter disconnects the moment you walk away, and overnight the next Bluelink refresh can be hours later.
-- If SOC went up by **5% or more** between two idle readings within 18 hours, a charge happened that the app never saw. It's filed as an **estimated** session: the duration says "Estimated" and power says "At least".
-
-Each session keeps a reading per poll, so it can show the charge curve, energy added, time taken and peak power.
+Each session stores every reading, providing the charge curve, energy added, duration and peak power.
 
 ## Favourite Routes
 
-Numen learns which road you usually take to places you drive often.
+Numen learns the road usually taken to frequently visited destinations.
 
-1. Trips are grouped by where they start (within 300 m) and end (within 150 m).
-2. Within each group, trips are compared by the road they used, on an 80 m grid. Trips that share at least 55% of their cells are the same road.
-3. A road becomes a favourite after **4 drives on at least 2 different days**, and only if it's clearly ahead of the others (1.5× the next one). Recent drives count more. Older ones fade with a 45-day half-life, and trips over 180 days old are ignored.
-4. In the CarPlay route preview, a route that follows at least **85%** of the favourite is picked and badged.
+1. Trips are grouped by origin (within 300 m) and destination (within 150 m).
+2. Within a group, trips are compared on an 80 m grid. Trips sharing at least 55% of their grid cells are treated as the same road.
+3. A road becomes a favourite after 4 drives on at least 2 different days, and only if it is used at least 1.5 times as often as the next alternative. Weighting decays with a 45-day half-life, and trips older than 180 days are excluded.
+4. In the CarPlay route preview, a route covering at least 85% of the favourite is selected and labelled.
 
-Two traps that made this silently never fire:
+Two details are required for reliable matching:
 
-- **Thinned trips.** A long trip keeps fewer points, so two recordings of the same road can differ 8× in point spacing. Comparing only the recorded points scored two identical drives at 0.27. Filling in points along each segment first scores them at 0.87.
-- **Shared ends.** Every route to a destination shares the last few streets, which makes all routes look alike. The first and last 300 m are trimmed before comparing.
+- **Interpolation.** Long trips are stored with fewer points, so two recordings of the same road can differ eightfold in point spacing. Comparing recorded points alone scored identical drives at 0.27; interpolating along each segment raises this to 0.87.
+- **Shared endpoints.** All routes to a destination share the final streets, which inflates similarity. The first and last 300 m are excluded from comparison.
 
-The grid uses one fixed latitude per route for its longitude spacing. Working it out per point made the cells drift along a long drive.
+Longitude spacing uses a single reference latitude per route, so grid cells do not drift along long drives.
 
-## Where You're Headed
+## Destination Prediction
 
-When CarPlay connects, Numen may suggest a destination. It looks at trips that started near where the car is now (within 750 m, looser than elsewhere, because a trip's first point is recorded after the car is already moving) and at the time of day and day of the week you usually leave.
+When CarPlay connects, Numen may suggest a destination based on trips that began near the vehicle's current position (within 750 m, as a trip's first recorded point is captured after the vehicle is already moving) and on the usual departure time and day.
 
-- Same weekday counts most. Other weekdays count a bit, so a Monday can learn from Tuesdays.
-- Weekdays and weekends don't mix. Saturday isn't a quiet Wednesday.
+- The same weekday carries the most weight; other weekdays carry some weight.
+- Weekday and weekend trips are kept separate.
 
-A suggestion you accept goes straight into the route preview, already knowing your favourite road.
+An accepted suggestion opens the route preview with the favourite road already selected.
 
 ## Trip Insights
 
-On iPhones with Apple Intelligence, the commute card writes a short summary on the device with Apple's Foundation Models: the drive time, a charging note (or how much range you'll have to spare), and the traffic. Nothing is sent to a server for this.
+On devices that support Apple Intelligence, the commute card generates a short summary on the device using Apple's Foundation Models: drive time, a charging note or remaining range margin, and traffic conditions. No data is sent to a server.

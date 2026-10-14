@@ -1,79 +1,101 @@
 # Energy Model
 
-Every Arrival SOC in Numen comes from one place: a physics model of the car, run over the actual route, then corrected by how your car has really driven.
+All Arrival SOC estimates in Numen are produced by a single model: a physical model of the vehicle evaluated along the actual route, then calibrated against the vehicle's measured trips.
 
-It used to be "route km ÷ Bluelink range × battery %". That charged a 50 km climb the same as 50 km of flat road, stop-and-go the same as 120 km/h, and a −15 °C morning the same as July.
+This replaces an earlier estimate based on distance as a fraction of Bluelink's range, which did not account for elevation, speed, traffic or temperature.
 
-**Unconfirmed.** The model is new and still being checked against real drives.
+**Not yet verified.** The model is new and is being validated against real drives.
 
-## The Car
+## Vehicle Parameters
 
-Defaults are the IONIQ 6 AWD with a driver:
+Defaults for the IONIQ 6 AWD with a driver:
 
-| | Value |
+| Parameter | Value |
 |---|---|
 | Mass | 2,150 kg |
-| Drag area (Cd × frontal area) | 0.51 m² (Cd 0.22 on 20" wheels × about 2.32 m²) |
-| Rolling resistance | 0.010 |
+| Drag area (Cd × frontal area) | 0.51 m² (Cd 0.22 with 20" wheels × ~2.32 m²) |
+| Rolling resistance coefficient | 0.010 |
 | Drivetrain efficiency | 85% |
-| Regen recovery | 65% |
+| Regenerative recovery | 65% |
 | Base electrical load | 0.35 kW |
-| Usable pack | The last capacity the BMS reported, or 77.4 kWh |
+| Usable capacity | Last capacity reported by the BMS, or 77.4 kWh |
 
-These give about 15 kWh/100 km at 100 km/h and 18.5 at 120 km/h, which matches Hyundai's published highway figures.
+These produce approximately 15 kWh/100 km at 100 km/h and 18.5 kWh/100 km at 120 km/h, consistent with published highway consumption.
 
-## A Route, Piece by Piece
+## Route Evaluation
 
-The route is cut into pieces about 250 m long. Each piece gets its own speed, elevation change, heading and weather, and the model adds up what each one costs.
+The route is divided into segments of approximately 250 m. Each segment has its own speed, elevation change, heading and weather, and its energy cost is the sum of:
 
-For each piece:
+| Component | Model |
+|---|---|
+| Rolling resistance | Scaled by tire type (All-Season × 1.00, Winter × 1.08, Summer × 0.95), with an allowance for wet roads |
+| Aerodynamic drag | Calculated at airspeed, so headwinds increase and tailwinds reduce consumption. Air density follows temperature (approximately 10% higher at −15 °C than at 20 °C). |
+| Elevation | Climbing consumes energy; descending recovers part of it through regenerative braking |
+| Stop-and-go | Kinetic energy not recovered at each stop, with stop frequency derived from average speed |
+| Cabin and battery | Heating or cooling for the time spent on the segment. The heat pump is effective to approximately −10 °C, below which resistive heating is used. A cold pack incurs additional internal losses. |
 
-- **Rolling resistance.** Scaled by your tires: All-Season × 1.00, Winter × 1.08, Summer × 0.95. Wet roads add a bit more.
-- **Air resistance.** At your speed through the air, not over the road, so a headwind costs and a tailwind helps. Cold air is denser: about 10% more at −15 °C than at 20 °C.
-- **Elevation.** Going uphill uses energy. Going downhill gets some back through regen. A long descent can come out ahead.
-- **Stop-and-go.** Each stop throws away energy regen can't recover. The slower the average speed, the more stops it assumes.
-- **Cabin and battery.** Heating or cooling for the time spent on that piece. The heat pump keeps heating cheap down to about −10 °C. Below that the resistive heater takes over. A cold pack also loses a bit more to internal resistance.
-
-Speeds come from Mapbox's per-segment durations, so traffic is included. Your driving profile scales cruising speed only, since nobody's driving style changes how fast a traffic jam moves.
+Segment speeds come from Mapbox's per-segment durations and include traffic. The user's driving profile adjusts cruising speed only.
 
 ## Elevation
 
-From Mapbox's Terrain-DEM tiles. Each pixel's colour is a height:
+Elevation is read from Mapbox Terrain-DEM tiles, in which each pixel encodes a height:
 
 ```
 height = −10000 + (R × 65536 + G × 256 + B) × 0.1   metres
 ```
 
-- Zoom depends on the route length: zoom 12 for a commute (about 28 m a pixel in Toronto), down to zoom 10 for a road trip (about 110 m). Either is fine enough to follow a hill.
-- Tiles are cached on disk, so a commute's tiles are only downloaded once.
-- Bytes are read straight from the PNG, not drawn into an image first. Drawing can apply colour management and nudge the values, and here the values are the data.
-- The profile is smoothed so pixel-to-pixel noise doesn't count as climbing.
+- Zoom level depends on route length, from zoom 12 for short routes (~28 m per pixel at Toronto's latitude) to zoom 10 for long ones (~110 m per pixel).
+- Tiles are cached on disk.
+- Values are read directly from the PNG data, without drawing, so that colour management cannot alter them.
+- The elevation profile is smoothed to suppress pixel-level noise.
 
 ## Weather
 
-WeatherKit's hourly forecast at points along the route, read for the hour you'll be there. A 300 km drive that leaves in sun can finish in rain and a headwind. Forecasts are cached for an hour per 25 km area, so re-planning a trip doesn't spend more WeatherKit calls.
+WeatherKit hourly forecasts are sampled along the route for the expected time of arrival at each point. Forecasts are cached for one hour per ~25 km area.
 
-## Quick First, Better After
+## Progressive Estimates
 
-Estimates have to show up straight away. So the first answer is built from the route's speeds and today's temperature. Elevation and the forecast are fetched in the background, the estimate is rebuilt, and every screen updates. The phone, CarPlay and the dashboard all ask the same place, so they always agree.
+An initial estimate is produced immediately from route speeds and current temperature. Elevation and forecasts are then fetched in the background, the estimate is recalculated, and all screens update. iPhone, CarPlay and the CarPlay dashboard all use the same estimator.
 
-## Learning Your Car
+## Calibration
 
-Every trip the OBD-II adapter measured (3 km or longer) is run back through the model with the same speeds, the same elevation and that day's temperature. The prediction is compared with what the BMS says the trip actually used.
+Each OBD-measured trip of 3 km or longer is replayed through the model with its recorded speeds, elevation and temperature, and the prediction is compared with the energy reported by the BMS.
 
-Two corrections are fitted from those pairs:
+Two correction factors are fitted from these pairs:
 
-- **Driving**, for rolling, air, elevation and regen. Kept between 0.75 and 1.35.
-- **Cabin and battery**, for heating and cooling. Kept between 0.5 and 2.0.
+| Factor | Covers | Range |
+|---|---|---|
+| Driving | Rolling resistance, drag, elevation and regenerative braking | 0.75–1.35 |
+| Cabin and battery | Heating and cooling | 0.5–2.0 |
 
-Keeping them apart means a cold week teaches the heating side without throwing off the highway side.
+Fitting them separately allows cold-weather driving to adjust the thermal factor without distorting highway consumption. With few trips the factors are weighted toward 1.0, and full weight is reached after 10 trips.
 
-With only a few trips, the corrections are pulled toward no change, so three trips nudge the model instead of rewriting it. It's trusted fully after 10.
+**Settings › Trip Planning › Range Estimates** shows the calibration status (**Not Confident** under 3 trips, **Learning** under 10, then **Confident**) and the vehicle's consumption relative to the model.
 
-**Settings › Trip Planning › Range Estimates** shows how it's going: **Not Confident** under 3 trips, **Learning** under 10, then **Confident**. It also shows how your car compares with the physics, as a single figure ("uses 6% more").
+Calibration is derived from trip history, which is included in the [iCloud backup](icloud-backup.md), and is rebuilt after a reinstall.
 
-The corrections come from your trip history, which is already [backed up](icloud-backup.md). A reinstall relearns them instead of syncing them.
+## In-Drive Correction
 
-## While You Drive
+During guidance, energy used so far is compared with the prediction, and the remainder of the route is rescaled by the difference. When guidance resumes partway through a route, the starting charge is back-calculated so the correction starts neutral.
 
-During guidance the app compares what the drive has used so far with what was predicted, and re-rates the rest of the route by that difference. If you pick up guidance partway (after the app restarts, say), it works backwards to your starting charge so it doesn't blame the model for road it never saw.
+## Range Without Bluelink
+
+The OBD-II signal set has no range value. When Bluelink is not in use, range is calculated as the adapter's SOC multiplied by a full-charge range learned from the vehicle's own trips:
+
+| Parameter | Value |
+|---|---|
+| Initial full-charge range | 475 km (the typical 450–500 km for an IONIQ 6), weighted as 200 km of driving |
+| Recency | A trip's weight halves every 21 days; trips older than 90 days are excluded |
+| Adapter-measured trips | Full weight, 3 km minimum |
+| Trips measured by battery percentage | Half weight, 15 km minimum |
+| Per-trip consumption | Trips outside 8–40 kWh/100 km are excluded |
+| Result | Limited to 250–650 km per full charge |
+
+| Recent Driving | Full Charge | At 64% |
+|---|---|---|
+| No trips | 475 km | 304 km |
+| 14 kWh/100 km for a month | 526 km | 337 km |
+| 22 kWh/100 km for a month | 383 km | 245 km |
+| Summer, followed by two weeks of winter | 401 km | 257 km |
+
+When Bluelink is available, its range figure is used instead.

@@ -1,14 +1,14 @@
 # Apple Platforms
 
-Everything outside the main app: widgets, Live Activities, Apple Watch, Shortcuts, the share sheet and walk-away locking.
+This document covers Numen's integrations outside the main app: widgets, Live Activities, Apple Watch, Shortcuts, the share extension and walk-away locking.
 
-None of these talk to Bluelink themselves. They read the status snapshot the app writes to the shared App Group after every refresh, and send commands back through the app. See [Architecture](architecture.md#sharing-between-processes).
+None of these components contact Bluelink directly. They read the status snapshot written to the shared App Group after each refresh, and send commands through the app. See [Architecture](architecture.md#shared-storage).
 
 ## Widgets
 
-**Vehicle Status** comes in small and medium sizes for the Home Screen, plus circular, rectangular and inline for the Lock Screen. It shows SOC, range, lock state, climate and charging.
+**Vehicle Status** is available in small and medium sizes on the Home Screen, and in circular, rectangular and inline sizes on the Lock Screen. It shows SOC, range, lock state, climate and charging.
 
-Buttons on the widget open `myioniq://action/<action>`, which the app handles: lock or unlock, climate on or off, charging on or off, or open a specific screen.
+Widget buttons open `myioniq://action/<action>` to lock or unlock, toggle climate or charging, or open a specific screen.
 
 ## Live Activities
 
@@ -16,65 +16,62 @@ Buttons on the widget open `myioniq://action/<action>`, which the app handles: l
   <img src="../images/live-activities.png" width="420" alt="Charging, Climate and Battery Preconditioning Live Activities">
 </p>
 
-| Activity | Shows |
+| Activity | Content |
 |---|---|
-| Charging | SOC, charge power, time to your target, and the target |
-| Climate | Cabin target, defrost, time left, and whether the car is locked |
-| Charge Stop | The charger you're heading to on a CarPlay route: arrival time, distance, power, pack temperature while preconditioning, and time to your target once you're charging |
+| Charging | SOC, charge power, time to target, and the target |
+| Climate | Cabin target, defrost, time remaining, and lock state |
+| Charge Stop | The charger on the active CarPlay route: arrival time, distance, power, pack temperature during preconditioning, and time to target while charging |
 
-They show on the Lock Screen, in the Dynamic Island, on Apple Watch and in CarPlay. CarPlay needs nothing extra. iOS shows the activity there on its own.
+Live Activities appear on the Lock Screen, in the Dynamic Island, on Apple Watch and in CarPlay. CarPlay presentation requires no additional configuration.
 
-While charging, the [wake-up service](wake-up-service.md) sends a silent push every 2 to 5 minutes so the app can refresh and keep the Charging activity current. With the OBD-II adapter connected, the app updates it from live readings instead.
+During charging, the [wake-up service](wake-up-service.md) sends a background push every 2 to 5 minutes so the app can refresh the Charging activity. While the OBD-II adapter is connected, the activity is updated from live readings instead.
 
 ## Apple Watch
 
-The Watch app shows the same status as the phone and sends six commands back: lock, unlock, start and stop climate, start and stop charging.
+The Watch app displays the same status as the iPhone and supports six commands: lock, unlock, start and stop climate, and start and stop charging.
 
-The phone sends its status over WatchConnectivity (`updateApplicationContext`) after every refresh, so the Watch always has the latest even when the phone app isn't open. Commands come back as plain strings (`"lock"`, `"startClimate"`) and run through the same code as a tap on the phone.
+The iPhone sends status with `updateApplicationContext` after each refresh, so the Watch has current data even when the iPhone app is not open. Commands are sent as action strings (for example `"lock"` or `"startClimate"`) and run through the same code path as the iPhone controls.
 
-## Shortcuts and Siri
+## Shortcuts
 
-| Shortcut | Does |
+| Shortcut | Function |
 |---|---|
-| Lock Vehicle | Locks, with the walk-away checks below. **Force Lock** skips them. |
-| Unlock Vehicle | Unlocks |
-| Check Battery Level | SOC and range, from the last status |
-| Check Charging Status | Whether the car is charging or plugged in |
+| Lock Vehicle | Locks after the walk-away checks below. **Force Lock** bypasses them. |
+| Unlock Vehicle | Unlocks the vehicle |
+| Check Battery Level | SOC and range from the last status |
+| Check Charging Status | Whether the vehicle is charging or plugged in |
 | Check Lock Status | Locked or unlocked |
-| Check Climate Status | Whether climate is on |
-| Check Vehicle Status | SOC, range, what the car is doing, and where it is |
-| Find My Car | The car's last known location as a street address |
-| Plan EV Trip | Opens the Trip Planner for a destination and checks whether you have the range |
+| Check Climate Status | Whether climate is running |
+| Check Vehicle Status | SOC, range, current activity and location |
+| Find My Car | The vehicle's last known address |
+| Plan EV Trip | Opens the Trip Planner and checks whether the destination is within range |
 
 ## Walk-Away Locking
 
-Walk-away locking is a Shortcuts automation (for example, when the phone disconnects from CarPlay) that runs **Lock Vehicle**. The shortcut checks a few things before it actually locks:
+Walk-away locking is configured as a Shortcuts automation, such as on CarPlay disconnection, that runs **Lock Vehicle**. Before locking, the shortcut performs these checks in order:
 
-1. **Cooldown.** An automatic lock within 60 seconds of a successful lock is skipped quietly. A reconnect followed by a disconnect would otherwise fire a second lock.
-2. **CarPlay or car audio still connected.** You haven't left.
-3. **Beacon**, if you've set one up. A Bluetooth beacon in the car tells the app how far away you are. The lock waits up to about 30 seconds for you to be more than 2.5 m away.
-4. **The car itself**, if the OBD-II adapter is in range. An open door or the ignition on holds the lock. See [OBD-II Adapter](obd-adapter.md#doors-and-locks).
+| Check | Behaviour |
+|---|---|
+| Cooldown | An automatic lock within 60 seconds of a successful lock is skipped |
+| CarPlay or vehicle audio | The lock is cancelled if either is still connected |
+| Proximity beacon | If configured, waits up to approximately 30 seconds for the user to be more than 2.5 m from the vehicle |
+| Vehicle state | If the OBD-II adapter is in range, waits while a door is open or the ignition is on; see [OBD-II Adapter](obd-adapter.md#doors-and-locks) |
 
-Every hold sends a notification. Tapping it locks straight away.
+A notification is posted whenever a lock is held; tapping it locks immediately.
 
-### The Beacon
+### Proximity Beacon
 
-Any iBeacon works. You enter its UUID, major and minor in Settings, or pick it from a scan.
+Any iBeacon can be used, configured by UUID, major and minor values in Settings or selected from a scan.
 
-- Distance readings are noisy, so they're smoothed with a Kalman filter. You count as in the car at 1.5 m or closer, and as out of it at 2.5 m or further. The gap between the two stops the state flipping back and forth.
-- Three readings in a row with no beacon in range count as "out of range".
-- iOS stops beacon ranging when the app is suspended, so the last reading just sits there. A stale "outside" looks exactly like you walking away. The lock check never reads that saved value. It waits for a reading newer than the request. If none comes, it says so and leaves the decision to the OBD-II check.
-- To keep ranging alive in the background, the app runs a low-accuracy location session alongside it. You can turn it off with **Background Ranging** in the auto-lock settings to save battery.
+- Distance readings are smoothed with a Kalman filter. The user is considered in the vehicle at 1.5 m or less and outside it at 2.5 m or more; the gap prevents rapid switching.
+- Three consecutive readings without the beacon are treated as out of range.
+- iOS suspends beacon ranging when the app is suspended, leaving the last value unchanged. The lock check does not use a stored value: it waits for a reading newer than the request, and if none arrives it defers to the vehicle state check.
+- Background ranging is sustained by a low-accuracy location session, which can be disabled with **Background Ranging** in the auto-lock settings.
 
-## Share Sheet
+## Share Extension
 
-Share an address, a place or a map link from any app and pick Numen. The share extension finds the place, shows it on a map to confirm, then:
-
-- if CarPlay is connected, sends it straight to the CarPlay screen, or
-- if not, opens the Trip Planner with it.
-
-**Send to Vehicle** holds it until CarPlay next connects.
+An address, place or map link shared from another app is resolved and shown on a map for confirmation. It is then sent to CarPlay if connected, or opened in the Trip Planner. **Send to Vehicle** holds it until CarPlay next connects.
 
 ## CarPlay
 
-Numen runs as a navigation app in CarPlay, with its own map, turn-by-turn directions, lane guidance, speed limits and charging stops. It also has a dashboard view and supports iOS 27's map panels. Routing is covered in [Routing](routing.md), and sending directions to the car's cluster in [Cluster and HUD](cluster-and-hud.md).
+Numen is a CarPlay navigation app with its own map, turn-by-turn guidance, lane guidance, speed limits and charging stops, a dashboard scene, and support for iOS 27 map panels. Routing is described in [Routing](routing.md), and cluster output in [Cluster and HUD](cluster-and-hud.md).

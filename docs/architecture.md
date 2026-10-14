@@ -4,79 +4,78 @@
   <img src="../images/home.png" width="240" alt="The Home screen">
 </p>
 
-Numen is a SwiftUI app for iOS 26 and later. It has no server of its own for car data. Everything about the car is fetched, decoded and stored on the phone.
+Numen is a SwiftUI application for iOS 27 and later. It has no backend for vehicle data: all vehicle information is retrieved, decoded and stored on the device.
 
 ## Targets
 
-| Target | What It Does |
+| Target | Purpose |
 |---|---|
-| Numen (iPhone) | The app. Also hosts the CarPlay scenes. |
-| Watch App | Shows status and sends commands back to the phone over WatchConnectivity. |
+| Numen | The iPhone app. Also hosts the CarPlay scenes. |
+| Watch App | Displays vehicle status and relays commands to the iPhone over WatchConnectivity. |
 | Widget Extension | Home Screen and Lock Screen widgets, and the Climate and Charge Stop Live Activities. |
-| Charging Live Activity | The Live Activity shown while the car charges. |
-| Share Extension | Takes an address or place from any app's share sheet and sends it to the Trip Planner or straight to CarPlay. |
+| Charging Live Activity | The Live Activity displayed during a charging session. |
+| Share Extension | Accepts an address or place from the system share sheet and passes it to the Trip Planner or CarPlay. |
 
-## Where the Data Comes From
+## Data Sources
 
-There are three ways to talk to the car, and they don't agree all the time.
+Numen communicates with the vehicle through three channels:
 
-1. **[Bluelink](bluelink.md)** works from anywhere. It's the only way to send remote commands (lock, climate, charge). Its status is often the car's last upload, not the car right now.
-2. **The [OBD-II adapter](obd-adapter.md)** reads the car directly over Bluetooth. It only works when your phone is near the car, but the numbers are live.
-3. **The [harness adapter](harness-adapter.md)** sits on the car's multimedia CAN bus. It starts battery preconditioning and puts directions on the cluster and HUD.
+| Source | Availability | Provides |
+|---|---|---|
+| [Bluelink](bluelink.md) | Anywhere with a network connection | Remote commands and the vehicle's last uploaded status |
+| [OBD-II adapter](obd-adapter.md) | Bluetooth, at the vehicle | Live battery, charging, cabin and body data |
+| [Harness adapter](harness-adapter.md) | Bluetooth, at the vehicle | Battery preconditioning, and navigation on the cluster and HUD |
 
-### Which One Wins
+### Source Precedence
 
-When the OBD-II adapter has a reading, it beats Bluelink for SOC, charge power, door locks and charging state. The rule is "newest measurement wins", not "OBD always wins". Each value carries the time it was measured, and Bluelink's own timestamp is compared against the adapter's.
+Bluelink often reports the vehicle's last upload rather than its current state. When the OBD-II adapter has a reading, values are resolved by measurement time: each value carries the time it was measured, and the newer measurement is used. This applies to SOC, charging state, charge power and door locks.
 
-A few specific rules:
+| Value | Rule |
+|---|---|
+| Lock state | The adapter's reading is used when it is newer than Bluelink's. A single unlocked door reports the vehicle as unlocked; reporting it locked requires all four doors. |
+| Charge history | Bluelink readings are ignored while the adapter is connected, so that a cached "not charging" status cannot end an active session. |
+| Charge power | A measured value (adapter, or a non-zero Bluelink value) is shown as reported. Otherwise the observed rate of SOC increase is shown, prefixed with `~`. With neither, no value is shown. See [Bluelink](bluelink.md#known-behaviour). |
 
-- **Lock state.** The adapter's lock bits only override Bluelink when they're newer. If even one door reads unlocked, the car is shown unlocked. Showing "locked" needs all four doors to answer.
-- **Charge history.** While the adapter is connected, Bluelink polls are ignored for charge history. A stale "not charging" from Bluelink would otherwise end a session that's still running.
-- **Charge power.** There are three tiers. A measured figure (adapter, or a non-zero Bluelink value) is shown as is. Without one, the app shows the rate SOC has actually been climbing at, with a `~` in front. If there's nothing to measure, it shows nothing rather than "0 kW". See [Bluelink quirks](bluelink.md#quirks).
+## Application State
 
-## State
+`VehicleViewModel` is the single source of truth for vehicle state. One instance is created at launch and shared with every screen, and all vehicle commands are issued through it.
 
-`VehicleViewModel` is the single source of truth on the phone. It's created once at launch and shared with every screen. Every vehicle command goes through it.
+The instance is created in the app delegate rather than by a SwiftUI view. Background refresh launches the app without a scene, so an object owned by a view would not exist during those launches.
 
-It's created in the app delegate, not in a SwiftUI view. A background refresh launches the app with no window, and a view-owned object would never exist in that launch.
+## Shared Storage
 
-## Sharing Between Processes
+The app, widgets, Live Activities, Watch bridge and share extension share an App Group. After every refresh the app writes a status snapshot (SOC, range, locks, climate, charge time, target SOC and the latest OBD reading). Widgets read this snapshot and never contact Bluelink directly.
 
-The app, widgets, Live Activities, Watch bridge and share extension all read one App Group. The app writes a snapshot of status (SOC, range, locks, climate, charge time, target SOC, the last OBD reading) after every refresh. Widgets read that snapshot. They never call Bluelink themselves.
+Trip, charge and climate preset history is stored as JSON files in the App Group container rather than in UserDefaults. Charge sessions hold one sample per reading, which exceeds what UserDefaults is suited to, and widgets can read a file without loading the full history.
 
-History stores (trips, charges, climate presets) are JSON files in the App Group container rather than UserDefaults. A charge session carries one sample per poll, which is too big for a defaults blob, and widgets can read a file without loading everything.
+The share extension writes the destination to the App Group, then either posts a Darwin notification to the running CarPlay scene or opens `myioniq://destination` to hand it to the Trip Planner. **Send to Vehicle** holds the destination until CarPlay next connects.
 
-The share extension writes a destination to the App Group and then either:
+## Command Queue
 
-- posts a Darwin notification, if CarPlay is connected, so the running CarPlay scene picks it up, or
-- opens `myioniq://destination`, so the phone's Trip Planner picks it up.
+Bluelink rejects commands while the vehicle is processing a previous one, and commands fail when the device is offline. In both cases the command is added to a persistent queue.
 
-"Send to Vehicle" holds the destination in the App Group until CarPlay next connects.
-
-## Commands When the Car Is Busy
-
-Bluelink rejects a command while the car is still handling the last one. It also fails when the phone is offline. In both cases the command goes into a queue that's saved to disk.
-
-- A "busy" reply retries after 15 seconds, then 30.
-- When the network comes back, the queue is replayed in order.
-- If a background refresh hits a busy car, the next background task is rescheduled for when the busy window ends. An in-memory retry wouldn't survive the app being suspended.
+- A busy response is retried after 15 seconds, then after 30 seconds.
+- When connectivity returns, queued commands are replayed in order.
+- If a background refresh encounters a busy vehicle, the next background task is scheduled for the end of the busy window, since an in-memory retry does not survive suspension.
 
 ## Background Refresh
 
-`BackgroundRefreshManager` schedules a background app refresh at the interval you pick, inside the active hours you set. Both settings live in the App Group so the widget can show when the next refresh is due.
-
-While charging, refreshes also come from the [wake-up service](wake-up-service.md).
+`BackgroundRefreshManager` schedules background app refresh at a user-selected interval within user-selected active hours. Both settings are stored in the App Group so the widget can display the next refresh time. During charging, additional refreshes are triggered by the [wake-up service](wake-up-service.md).
 
 ## No-Refresh Places
 
-A status refresh wakes the car over its cellular link. In an underground garage that fails and can leave Bluelink calling the car busy for a while. At home it wakes the car for nothing.
+A status refresh wakes the vehicle over its cellular connection. In underground parking this can fail and leave Bluelink reporting the vehicle as busy; at home it is unnecessary.
 
-You can mark places where Numen leaves the car alone. While the car is parked at one, automatic refreshes read the status Bluelink already has instead of waking the car. A refresh you ask for still goes through. The car's location is whichever is newer: Bluelink's, or where the phone last saw the adapter connected.
+Users can designate places where automatic refreshes read Bluelink's cached status instead of waking the vehicle. Manual refreshes are not affected. The vehicle's position is taken from whichever is newer: Bluelink's reported location or the location where the OBD-II adapter was last connected.
+
+## Early Access
+
+During early access, each installation checks in with Numen's server at launch. Installations are admitted while seats are available and queued in order of arrival once they are full; the capacity is raised as the beta grows. The installation identifier is stored in iCloud Keychain, so reinstalling the app or moving to a new iPhone keeps an admitted seat or a place in line. Admitted installations do not depend on the server to open.
 
 ## Deep Links
 
-Widgets use `myioniq://action/<action>` to lock, toggle climate or charge, or open a specific screen.
+Widgets use `myioniq://action/<action>` to lock or unlock, toggle climate or charging, or open a specific screen.
 
 ## Diagnostics
 
-Settings › Developer has an activity log, recent network requests, an OBD console and tools for the cluster and CAN sniffer. To show it, tap the version number in Settings seven times.
+**Settings › Developer** provides an activity log, recent network requests, an OBD console, and tools for the cluster and CAN capture. The menu is enabled by tapping the version number in Settings seven times.
