@@ -16,6 +16,7 @@ Some features do need other services. This page lists every one, what it gets, a
 | Apple Foundation Models | Nothing leaves the phone | Trip insights run on the device |
 | [Wake-up service](wake-up-service.md) | A Live Activity ID and two push tokens. No car data. | While a charging Live Activity is running. Deleted within 8 hours. |
 | [Bug report server](bug-reports.md) | Your report, with redacted diagnostics | Only when you file one |
+| Early access waitlist | A random install ID and the app version | Each time the app opens, during early access |
 | Your iCloud | Settings, history and sign-in | [Backup](icloud-backup.md), in your own account |
 
 ## What Stays on Your Phone

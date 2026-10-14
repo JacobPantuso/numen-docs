@@ -4,7 +4,7 @@
   <img src="../images/card-hardware.png" width="720" alt="The OBD-II adapter and the harness adapter">
 </p>
 
-The harness adapter is a WiCAN on the car's multimedia CAN bus (M-CAN), wired in behind the head unit with the [Ioniq5_CAN](https://github.com/tylerharvey/Ioniq5_CAN) harness kit. It runs the `feature/myIONIQ` branch of [my firmware fork](https://github.com/JacobPantuso/wicant-i-precondition), which builds on [wicant-i-precondition](https://github.com/L1Z3/wicant-i-precondition) and [WiCAN](https://github.com/meatpiHQ/wican-fw).
+The harness adapter is a WiCAN on the car's multimedia CAN bus (M-CAN), wired in behind the head unit with the [Ioniq5_CAN](https://github.com/tylerharvey/Ioniq5_CAN) harness kit. It runs the Numen firmware: the `feature/myIONIQ` branch of [my fork](https://github.com/JacobPantuso/wicant-i-precondition), which builds on [wicant-i-precondition](https://github.com/L1Z3/wicant-i-precondition) and [WiCAN](https://github.com/meatpiHQ/wican-fw).
 
 It does three things the OBD-II port can't:
 

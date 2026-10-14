@@ -45,7 +45,7 @@ Numen has three ways to reach the car. Bluelink works from anywhere. The OBD-II 
 |---|---|
 | **[Bluelink](docs/bluelink.md)** | Remote commands and the car's cloud status, and the quirks I work around. |
 | **[OBD-II Adapter](docs/obd-adapter.md)** | Every PID the app sends, and how each one is decoded. |
-| **[Harness Adapter](docs/harness-adapter.md)** | The WiCAN firmware fork: battery preconditioning, cluster directions and CAN sniffing. |
+| **[Harness Adapter](docs/harness-adapter.md)** | The Numen firmware for the WiCAN: battery preconditioning, cluster directions and CAN sniffing. |
 | **[Cluster and HUD](docs/cluster-and-hud.md)** | The IONIQ 6 navigation frames, byte by byte. |
 
 ## Features
