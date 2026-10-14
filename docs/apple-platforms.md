@@ -12,6 +12,10 @@ Buttons on the widget open `myioniq://action/<action>`, which the app handles: l
 
 ## Live Activities
 
+<p align="center">
+  <img src="../images/live-activities.png" width="420" alt="Charging, Climate and Battery Preconditioning Live Activities">
+</p>
+
 | Activity | Shows |
 |---|---|
 | Charging | SOC, charge power, time to your target, and the target |

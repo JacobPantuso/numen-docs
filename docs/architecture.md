@@ -1,5 +1,9 @@
 # Architecture
 
+<p align="center">
+  <img src="../images/home.png" width="240" alt="The Home screen">
+</p>
+
 Numen is a SwiftUI app for iOS 26 and later. It has no server of its own for car data. Everything about the car is fetched, decoded and stored on the phone.
 
 ## Targets
@@ -61,8 +65,6 @@ Bluelink rejects a command while the car is still handling the last one. It also
 
 `BackgroundRefreshManager` schedules a background app refresh at the interval you pick, inside the active hours you set. Both settings live in the App Group so the widget can show when the next refresh is due.
 
-A refresh that wakes the car regularly takes longer than the 30 seconds iOS allows. The expiry handler and the refresh race to finish the task, and a small guard makes sure it's only marked complete once. Completing a background task twice crashes the launch, and iOS cuts the refresh budget of apps that crash in the background.
-
 While charging, refreshes also come from the [wake-up service](wake-up-service.md).
 
 ## No-Refresh Places
@@ -77,9 +79,4 @@ Widgets use `myioniq://action/<action>` to lock, toggle climate or charge, or op
 
 ## Diagnostics
 
-- **Activity Log** (Settings › Developer) records app events by category, including every frame sent to the cluster.
-- **HTTP Logs** keeps recent requests in memory, with status codes and timings.
-- A main-thread watchdog logs any hang over a threshold so jank shows up in bug reports.
-- Logs use `.notice` or higher so they persist in the system log. `.info` is dropped on device.
-
-To show the Developer menu, tap the version number in Settings seven times.
+Settings › Developer has an activity log, recent network requests, an OBD console and tools for the cluster and CAN sniffer. To show it, tap the version number in Settings seven times.

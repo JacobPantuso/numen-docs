@@ -22,6 +22,10 @@ Anything that needs the network (street names for the start and end, the tempera
 
 ## Charge History
 
+<p align="center">
+  <img src="../images/charge-session.png" width="240" alt="A recorded DC fast charge">
+</p>
+
 Readings come from two places and are stitched into sessions:
 
 - The **OBD-II adapter** every 60 seconds while connected, and straight away when a charge starts or stops.

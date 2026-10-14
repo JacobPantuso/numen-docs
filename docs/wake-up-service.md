@@ -2,7 +2,7 @@
 
 iOS doesn't let an app refresh itself often enough to keep a charging Live Activity current. So a small AWS backend sends the phone a silent push on a schedule, and the app refreshes when it gets one.
 
-It's the only backend that touches the app during normal use, and it never sees anything about your car.
+It's a few small functions on AWS Lambda with a DynamoDB table, and it never sees anything about your car.
 
 ## How It Works
 
@@ -38,16 +38,4 @@ The app keeps its own list of registered activities. If it was closed before it 
 
 ## Keeping It Safe
 
-The endpoint has no login, and its address ships inside the app, so:
-
-- Every field is checked. Tokens must be hex, IDs must be short and plain, and the interval must be one of the allowed values. Anything else is rejected before it reaches the database.
-- Every route is throttled (5 requests a second, bursts of 10).
-- The Apple push key lives in AWS Systems Manager, not in the code.
-
-## Stack
-
-Serverless Framework, Node.js 22 on Lambda, API Gateway HTTP API, DynamoDB on demand, EventBridge for the 1-minute schedule.
-
-There are two stages. **dev** sends to Apple's sandbox push service for Debug builds. **prod** sends to production for TestFlight and App Store builds. Sending a production token to the sandbox fails with `BadDeviceToken`, so the two have to match the build.
-
-It costs effectively nothing. A month of use is well inside the AWS free tier.
+The service only accepts requests shaped exactly like the app's, and it's rate limited. It never receives your credentials or anything about your car.

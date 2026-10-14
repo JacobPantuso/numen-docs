@@ -1,5 +1,9 @@
 # OBD-II Adapter
 
+<p align="center">
+  <img src="../images/charge.png" width="240" alt="The Charge screen, fed by the adapter">
+</p>
+
 A Bluetooth OBD-II adapter lets Numen read the car directly instead of asking Bluelink. It only works when your phone is near the car, but the numbers are live. CarPlay navigation, live charging and trip energy all depend on it.
 
 Everything here was decoded and tested on an IONIQ 6 AWD. Other E-GMP cars share most of the battery side. The body module PIDs may differ.
@@ -62,7 +66,7 @@ Readings go into the shared App Group, so CarPlay, widgets and Live Activities u
 | `22BC03` | `770` → `778` | Body (IGMP) | Doors, trunk, hood, ignition, seat belts, rear locks |
 | `22BC04` | `770` → `778` | Body (IGMP) | Front locks |
 
-Byte numbers below count from the first byte after the `62 xx xx` echo, so `d[0]` is the first data byte. Most battery offsets come from the [OBDb](https://github.com/OBDb) IONIQ 6 signal set. The body module layout comes from [OVMS](https://github.com/openvehicles/Open-Vehicle-Monitoring-System-3).
+Byte numbers below count from the first byte after the `62 xx xx` echo, so `d[0]` is the first data byte.
 
 ### Battery (`220101`, `220105`)
 
@@ -148,7 +152,3 @@ The body module also guards walk-away locking. Before an automatic lock, the app
 The **OBD Console** (Settings › Developer) sends raw commands and runs a probe that checks every header above answers. It's the first thing to try with a new adapter or a different car.
 
 The **charge simulator** (debug builds only) feeds fake readings so the charging screens can be tested without plugging in.
-
-## Credits
-
-The first version of the BMS reads was ported from KiaMaps' IONIQ 6 implementation.

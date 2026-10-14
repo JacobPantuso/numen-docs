@@ -1,5 +1,9 @@
 # Routing and Charging Stops
 
+<p align="center">
+  <img src="../images/card-carplay.png" width="720" alt="CarPlay features">
+</p>
+
 Numen runs as a full navigation app in CarPlay, and the Trip Planner on the phone plans long drives with charging stops. Both use the same services.
 
 | Service | Used For |
@@ -82,6 +86,10 @@ Numen learns which road you usually take to places you drive often, and picks it
 If Mapbox didn't offer the road you usually take, the app asks again through a point on that road to get it back.
 
 ## Getting a Destination In
+
+<p align="center">
+  <img src="../images/navigate.png" width="240" alt="A charger picked on the phone, ready to send to the car">
+</p>
 
 - Search in the app or in CarPlay, by voice or by typing. Search returns businesses as well as addresses.
 - Share a place from any app (Maps, Safari, Messages). The share extension sends it to CarPlay if it's connected, or to the Trip Planner if not.

@@ -35,7 +35,7 @@ Your Bluelink username, password and PIN are stored in the iOS Keychain, and now
 
 ## Bug Reports
 
-Before a report leaves the phone, everything that could identify you or your car is removed: VIN, account details, email, PIN, place names, adapter names, coordinates and more. See [Redaction](bug-reports.md#redaction). Reports become GitHub issues, so don't put anything personal in the description.
+Before a report leaves the phone, everything that could identify you or your car is removed: VIN, account details, email, PIN, place names, adapter names, coordinates and more. See [Bug Reports](bug-reports.md#whats-removed). Reports become GitHub issues, so don't put anything personal in the description.
 
 ## The Adapters
 

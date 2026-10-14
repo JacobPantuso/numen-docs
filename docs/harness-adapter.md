@@ -1,5 +1,9 @@
 # Harness Adapter
 
+<p align="center">
+  <img src="../images/card-hardware.png" width="720" alt="The OBD-II adapter and the harness adapter">
+</p>
+
 The harness adapter is a WiCAN on the car's multimedia CAN bus (M-CAN), wired in behind the head unit with the [Ioniq5_CAN](https://github.com/tylerharvey/Ioniq5_CAN) harness kit. It runs the `feature/myIONIQ` branch of [my firmware fork](https://github.com/JacobPantuso/wicant-i-precondition), which builds on [wicant-i-precondition](https://github.com/L1Z3/wicant-i-precondition) and [WiCAN](https://github.com/meatpiHQ/wican-fw).
 
 It does three things the OBD-II port can't:
@@ -111,7 +115,6 @@ The **CAN Sniffer** in Settings › Developer records a session to a candump `-L
 
 - Keep each Bluetooth write to **65 bytes or fewer**. The app splits long commands into 60-byte writes. The firmware joins them until it sees `\r`.
 - Commands can be up to 254 characters.
-- The ESP32-C3 is short on memory. About 1 KB of new static data once stopped both CAN tasks with no error. The boot log reports heap headroom before the CAN tasks start. Check it after any firmware change.
 
 ## Pairing
 
