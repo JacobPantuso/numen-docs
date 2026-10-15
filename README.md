@@ -14,6 +14,7 @@
   <img src="https://img.shields.io/badge/CarPlay-navigation-2f6f3e.svg" alt="CarPlay navigation">
   <img src="https://img.shields.io/badge/TestFlight-early%20access-0D96F6.svg" alt="TestFlight early access">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License"></a>
+  <a href="https://buymeacoffee.com/jacobpantuso"><img src="https://img.shields.io/badge/Buy%20Me%20a%20Coffee-FFDD00?logo=buymeacoffee&logoColor=black" alt="Buy Me a Coffee"></a>
 </p>
 
 <p align="center">
@@ -51,5 +52,13 @@ Numen is in TestFlight early access. These documents describe the current build.
 
 - [BetterBlueKit](https://github.com/JacobPantuso/BetterBlueKit): the Bluelink client
 - [wicant-i-precondition](https://github.com/L1Z3/wicant-i-precondition), the [Ioniq5_CAN](https://github.com/tylerharvey/Ioniq5_CAN) harness and [WiCAN](https://github.com/meatpiHQ/wican-fw): the basis of the Numen firmware
+
+## Support Numen
+
+I love building experiences that make owning an EV a little better, and Numen will always be free. Running it isn't: the servers, map and charging data, and the developer account all cost money every month. If Numen has made your drives easier, a coffee helps keep it going, and I appreciate every bit of support for the time that goes into it.
+
+<p align="center">
+  <a href="https://buymeacoffee.com/jacobpantuso"><img src="https://img.shields.io/badge/Buy%20Me%20a%20Coffee-support%20Numen-FFDD00?logo=buymeacoffee&logoColor=black" alt="Buy Me a Coffee"></a>
+</p>
 
 <p align="center"><sub>Numen is an independent project and is not affiliated with or endorsed by Hyundai or Kia.</sub></p>
