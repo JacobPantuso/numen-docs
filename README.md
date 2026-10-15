@@ -55,7 +55,7 @@ Numen is in TestFlight early access. These documents describe the current build.
 
 ## Support Numen
 
-I love building experiences that make owning an EV a little better, and Numen will always be free because of that. If Numen has made your drives easier, a coffee helps keep it going, and I appreciate every bit of support for the time that goes into it.
+I love building experiences that make owning an EV a little better, and Numen will always be free because of that. If you are enjoying Numen, a coffee helps keep it going, and I appreciate every bit of support for the time that goes into it.
 
 <p align="center">
   <a href="https://buymeacoffee.com/jacobpantuso"><img src="https://img.shields.io/badge/Buy%20Me%20a%20Coffee-support%20Numen-FFDD00?logo=buymeacoffee&logoColor=black" alt="Buy Me a Coffee"></a>
