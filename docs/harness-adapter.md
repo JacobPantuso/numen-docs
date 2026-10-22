@@ -1,6 +1,6 @@
 # Harness Adapter
 
-The harness adapter is a WiCAN connected to the vehicle's multimedia CAN bus (M-CAN) behind the head unit, using the [Ioniq5_CAN](https://github.com/tylerharvey/Ioniq5_CAN) harness kit. It runs the Numen firmware, published as the `feature/myIONIQ` branch of [this fork](https://github.com/JacobPantuso/wicant-i-precondition), which builds on [wicant-i-precondition](https://github.com/L1Z3/wicant-i-precondition) and [WiCAN](https://github.com/meatpiHQ/wican-fw).
+The harness adapter is a WiCAN connected to the vehicle's multimedia CAN bus (M-CAN) behind the head unit, using the [Ioniq5_CAN](https://github.com/tylerharvey/Ioniq5_CAN) harness kit. It runs the Numen firmware, published as the [`firmware/Numen`](https://github.com/JacobPantuso/wicant-i-precondition/tree/firmware/Numen) branch of this fork, which builds on [wicant-i-precondition](https://github.com/L1Z3/wicant-i-precondition) and [WiCAN](https://github.com/meatpiHQ/wican-fw).
 
 The harness adapter provides three functions unavailable through the OBD-II port:
 
@@ -120,7 +120,7 @@ The adapter is paired with the iPhone. ESP-IDF deletes the bond when a pairing h
 
 ## Building the Firmware
 
-Build and flashing instructions are in the [firmware README](https://github.com/JacobPantuso/wicant-i-precondition). The preconditioning, cluster and capture logic include host tests that run on macOS without ESP-IDF:
+Build and flashing instructions are in the [firmware README](https://github.com/JacobPantuso/wicant-i-precondition/tree/firmware/Numen). The preconditioning, cluster and capture logic include host tests that run on macOS without ESP-IDF:
 
 ```
 make -C test/host
