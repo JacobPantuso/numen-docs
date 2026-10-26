@@ -120,7 +120,7 @@ The adapter is paired with the iPhone. ESP-IDF deletes the bond when a pairing h
 
 ## Installing and Updating
 
-Install the [latest Numen firmware release](https://github.com/JacobPantuso/wicant-i-precondition/releases/latest) from the WiCAN's local web page; no build is needed. After that, **Update Adapter** in Settings › OBD Adapter updates it from the app: Numen sends `ATXOTA`, joins the WiCAN's one-boot access point, uploads the build bundled with the app, and checks `ATXVER` once the adapter is back. In-app updates need the Numen firmware already on the WiCAN: stock firmware, or a build from before in-app updates, has no `ATXOTA`, so the first install always goes through the WiCAN's local web page.
+Install the [latest Numen firmware release](https://github.com/JacobPantuso/wicant-i-precondition/releases/latest) from the WiCAN's local web page; no build is needed. After that, **Update Adapter** in Settings › OBD Adapter updates it from the app: Numen sends `ATXOTA`, joins the WiCAN's one-boot access point, uploads the build bundled with the app, and checks `ATXVER` once the adapter is back. In-app updates need the latest Numen firmware (numen-2026.10.25 or newer) already on the WiCAN: stock firmware, or an earlier Numen build, has no `ATXOTA`, so the first install always goes through the WiCAN's local web page.
 
 ## Building the Firmware
 
