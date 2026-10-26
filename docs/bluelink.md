@@ -35,7 +35,11 @@ When climate is started without a preset, Numen recommends a cabin temperature b
 
 ## Surround View
 
-The vehicle can upload an image from its surround-view cameras. The request is not a remote command, and sending it as one returns error `6459`.
+The vehicle can upload an image from its surround-view cameras. Numen supports it in Canada and the US. No way to request one in Europe is known yet, so the feature is hidden there.
+
+### Canada
+
+The request is not a remote command, and sending it as one returns error `6459`.
 
 | Step | Detail |
 |---|---|
@@ -46,6 +50,17 @@ The vehicle can upload an image from its surround-view cameras. The request is n
 The image is a single 4,472 px panorama: front, rear, left and right views at 960 px each, followed by the overhead view at 632 px. Numen splits it at these widths.
 
 **Not yet verified.** The request format was captured from the official app; the full round trip has not been confirmed on the vehicle.
+
+### United States
+
+| Brand | Request | Captures |
+|---|---|---|
+| Hyundai | `POST /ac/v2/svm/findMyCarSVM` | `GET /ac/v2/svm/getSVMDetails`, with the images inline |
+| Kia | `POST lbs/svm/req` | `lbs/svm/inquire` lists captures; `lbs/svm/info` returns one capture's image |
+
+After a request, Numen checks the capture list every 15 seconds for up to five minutes. The image is the same 4,472 px panorama as in Canada.
+
+**Not yet verified.** The US flow has not been tested on a vehicle.
 
 ## Known Behaviour
 

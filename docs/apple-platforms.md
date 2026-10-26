@@ -8,6 +8,8 @@ None of these components contact Bluelink directly. They read the status snapsho
 
 **Vehicle Status** is available in small and medium sizes on the Home Screen, and in circular, rectangular and inline sizes on the Lock Screen. It shows SOC, range, lock state, climate and charging.
 
+**Vehicle Location** shows the car on a small map with its address and whether it's parked or driving, in small and medium sizes on the Home Screen. The Lock Screen's rectangular and inline sizes show the address.
+
 Widget buttons open `myioniq://action/<action>` to lock or unlock, toggle climate or charging, or open a specific screen.
 
 ## Live Activities
@@ -43,12 +45,27 @@ The iPhone sends status with `updateApplicationContext` after each refresh, so t
 | Check Lock Status | Locked or unlocked |
 | Check Climate Status | Whether climate is running |
 | Check Vehicle Status | SOC, range, current activity and location |
+| Get Current Status | The latest status Numen already has, without contacting the vehicle |
+| Fetch Vehicle Status | Wakes the vehicle and asks Bluelink for a fresh status |
+| Start Climate | Starts climate with the last settings or a preset |
+| Set Seat Climate | Turns seat heating or ventilation on or off, in the car, through the harness WiCAN |
 | Find My Car | The vehicle's last known address |
 | Plan EV Trip | Opens the Trip Planner and checks whether the destination is within range |
 
 ## Walk-Away Locking
 
-Walk-away locking is configured as a Shortcuts automation, such as on CarPlay disconnection, that runs **Lock Vehicle**. Before locking, the shortcut performs these checks in order:
+With the harness WiCAN paired, **Walk-Away Lock** runs in the app with no Shortcut. When a drive ends (CarPlay disconnects or the OBD-II adapter sees the ignition go off), Numen reads the WiCAN's signal strength twice a second and locks through the harness once the phone is clearly away, or once the link has been down for 3 seconds. The OBD-II adapter's occupancy check holds the lock while a door is open or the ignition is on.
+
+| Lock Distance | Away threshold (smoothed RSSI) |
+|---|---|
+| Short | −72 dBm |
+| Medium (default) | −80 dBm |
+| Long | −88 dBm |
+| Set From Where You're Standing | The average of six live readings |
+
+### Shortcut Fallback
+
+Without the harness, walk-away locking is configured as a Shortcuts automation, such as on CarPlay disconnection, that runs **Lock Vehicle**. Before locking, the shortcut performs these checks in order:
 
 | Check | Behaviour |
 |---|---|

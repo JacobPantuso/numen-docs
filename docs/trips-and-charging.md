@@ -41,6 +41,7 @@ Readings from two sources are combined into sessions:
 |---|---|
 | Session continuity | An active session may go up to 24 hours between readings, provided SOC has not decreased |
 | Unobserved charges | An SOC increase of 5% or more between two idle readings within 18 hours is recorded as an estimated session, with an estimated duration and a minimum power |
+| Implausible readings | A 0% reading is ignored as a failed read. A session averaging more than 260 kW, or adding 5% or more in under a minute, is discarded |
 
 Each session stores every reading, providing the charge curve, energy added, duration and peak power.
 

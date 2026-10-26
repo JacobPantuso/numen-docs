@@ -118,6 +118,10 @@ The **CAN Sniffer** in Settings › Developer records sessions in candump `-L` f
 
 The adapter is paired with the iPhone. ESP-IDF deletes the bond when a pairing handshake fails, and the original firmware initiated a handshake on every connection. The Numen firmware no longer forces encryption on connection, and the app reports **Pairing Lost** when the bond is missing. To recover, remove the adapter in the app and in iOS **Settings › Bluetooth**, then pair it again.
 
+## Installing and Updating
+
+Install the [latest release](https://github.com/JacobPantuso/wicant-i-precondition/releases/latest) once from the WiCAN's web page; no build is needed. After that, **Update Adapter** in Settings › OBD Adapter updates it from the app: Numen sends `ATXOTA`, joins the WiCAN's one-boot access point, uploads the build bundled with the app, and checks `ATXVER` once the adapter is back.
+
 ## Building the Firmware
 
 Build and flashing instructions are in the [firmware README](https://github.com/JacobPantuso/wicant-i-precondition/tree/firmware/Numen). The preconditioning, cluster and capture logic include host tests that run on macOS without ESP-IDF:
