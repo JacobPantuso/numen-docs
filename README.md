@@ -26,6 +26,32 @@
 
 These documents describe how Numen works: where its data comes from, how it communicates with the vehicle, and the services it depends on. Product information is available on the website. The protocols and vehicle data described here were developed and verified on an IONIQ 6 AWD.
 
+## NEMESIS Head Unit Research
+
+> **Rsearch in Progress.** This document records what has been achieved and verified on an IONIQ 6 while investigating the GEN5W infotainment platform. Once firmware decryption is complete, a viable path for a Numen service on the headunit exists.
+
+### Platform
+
+| Property | Value |
+|---|---|
+| Unit | Mobis Gen5 wide (`wp_daudioplus_ceev_ca`), part `37110-1EA07` |
+| SoC | Telechips ARMv7 (4 cores), TCC8xxx D-Audio Plus |
+| OS | Android 4.4 (KitKat), SELinux **enforcing** |
+| TEE | OP-TEE 3.12, secure world at physical `0x2e000000` (32 MB, firewalled) |
+| Update channel | USB package (`*.enc` modules + manifest + 16 GB map ZIP) |
+
+### Progress
+
+| Milestone | Status |
+|---|---|
+| Root via NEMESIS | ✅ Achieved and persistent (survives data wipes) |
+| ADB over USB / TCP (port 5555) | ✅ |
+| Boot partition dumps (boot, recovery, secure, sest, dtb, telesecurity…) | ✅ |
+| SELinux permissive toggle from init context | ✅  |
+| Update decryption chain fully mapped (static RE) | ✅ |
+| Decrypt harness built (calls official `startDecryptFile`) | ✅ Built, **on-unit test pending** |
+| Extraction of the AES key / TA binary | 🔬 In progress |
+
 ## Contents
 
 | Document | Description |
