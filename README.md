@@ -28,7 +28,7 @@ These documents describe how Numen works: where its data comes from, how it comm
 
 ## NEMESIS Head Unit Research
 
-> **Rsearch in Progress.** This document records what has been achieved and verified on an IONIQ 6 while investigating the GEN5W infotainment platform. Once firmware decryption is complete, a viable path for a Numen service on the headunit exists.
+> **Research in Progress.** This document records what has been achieved and verified on an IONIQ 6 while investigating the GEN5W infotainment platform. Once firmware decryption is complete, a viable path for a Numen service on the headunit exists.
 
 ### Platform
 
